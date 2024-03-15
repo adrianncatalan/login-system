@@ -1,51 +1,42 @@
 <?php
+// Requerimos la conexión a la BBDD para realizar las operaciones
 require('../model/config/config.php');
 
-// Permitir solicitudes CORS
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+// Usamos la variable global &_SERVER para verificar que el método usado ha sido POST
+if ($_SERVER['REQUEST_METHOD'] === "POST") {
+    // Verificar si los campos del formulario estan definidos y no son vacíos
+    $name = isset($_POST["name"]) && !empty($_POST["name"]) ? $_POST["name"] : null;
+    $lastname = isset($_POST["lastname"]) && !empty($_POST["lastname"]) ? (!empty($_POST["lastname"])) : null;
+    $username = isset($_POST["username"]) && !empty($_POST["username"]) ? $_POST["username"] : null;
+    $email = isset($_POST["email"]) && !empty($_POST["email"]) ? $_POST["email"] : null;
+    $phone = isset($_POST["phone"]) && !empty($_POST["phone"]) ? $_POST["phone"] : null;
+    $password = isset($_POST["password"])  && !empty($_POST["password"]) ? $_POST["password"] : null;
 
-// Verificar si la solicitud es POST
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Rescatamos la data enviada por el usuario
-    $name = isset($_POST["name"]) ? $_POST["name"] : null;
-    $lastname = isset($_POST["lastname"]) ? $_POST["lastname"] : null;
-    $username = isset($_POST["username"]) ? $_POST["username"] : null;
-    $email = isset($_POST["email"]) ? $_POST["email"] : null;
-    $phone = isset($_POST["phone"]) ? $_POST["phone"] : null;
-    $password = isset($_POST["password"]) ? $_POST["password"] : null;
-
-    // Validar datos
-    if (empty($name) || empty($lastname) || empty($username) || empty($email) || empty($phone) || empty($password)) {
-        // Si faltan campos requeridos, responder con un mensaje de error
-        http_response_code(400); // Bad Request
-        echo json_encode(array('message' => 'Todos los campos son obligatorios'));
-        exit();
-    }
-
-    // Sanitizar datos
+    // Aplicamos funciones de sanitizado para los los campos que provienen del frontend
     $name = htmlspecialchars($name);
     $lastname = htmlspecialchars($lastname);
     $username = htmlspecialchars($username);
     $email = filter_var($email, FILTER_SANITIZE_EMAIL);
     $phone = filter_var($phone, FILTER_SANITIZE_NUMBER_INT);
-    $password = htmlspecialchars($password); // Asegúrate de usar una función de hash segura para almacenar la contraseña
+    $password = htmlspecialchars($password);
 
-    // Verificar integridad de datos (por ejemplo, verificar si el correo electrónico ya existe en la base de datos)
+    // Verificar integridad de datos (por ejemplo, verificar si el username, email y phone ya existe en la base de datos)
+    // Realizamos una consult
+    $verifyQuery = 'SELECT username, email, phone FROM `user`';
+    $result = mysqli_query($conn, $verifyQuery);
+    $data[] = mysqli_fetch_assoc($result);
 
-    // Insertar datos en la base de datos (usar consultas preparadas para evitar inyección de SQL)
-    // Aquí deberías utilizar PDO o MySQLi con consultas preparadas para insertar los datos en la base de datos
-    // Por ejemplo:
-    /*
-    $stmt = $pdo->prepare("INSERT INTO users (name, lastname, username, email, phone, password) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$name, $lastname, $username, $email, $phone, $password]);
-    */
+    if ($data[0]['username'] === $name || $data[0]['email'] === $email || $data[0]['phone'] === $phone) {
+        echo 'The username, email or phone number is being used by another user. Please enter new information.';
+    } else {
+        $insertQuery = "INSERT INTO `user` (`id`, `name`, `lastname`, `username`, `email`, `phone`, `password`, `created_at`, `user_exist`) VALUES (uuid(), $name, $lastname, $username, $email, $phone, $password, now(), 1)";
+        if (mysqli_query($conn, $insertQuery)) {
+            echo 'Record inserted successfully.';
+        } else {
+            echo 'Error: ' . mysqli_error($conn);
+        }
+    }
 
-    // Si la inserción en la base de datos fue exitosa, responder con un mensaje de éxito
-    echo json_encode(array('message' => 'Usuario registrado correctamente'));
-} else {
-    // Si la solicitud no es de tipo POST, responder con un mensaje de error
-    http_response_code(405); // Método no permitido
-    echo json_encode(array('message' => 'Método no permitido'));
+    // Cerramos la conexión
+    mysqli_close($conn);
 }

@@ -2,22 +2,22 @@
     <div>
         <form class="register-ts" @submit.prevent="registerUser">
             <label for="name">Name</label>
-            <input type="text" name="name">
+            <input type="text" name="name" required minlength="3" maxlength="50">
 
             <label for="lastname">Lastname</label>
-            <input type="text" name="lastname">
+            <input type="text" name="lastname" required minlength="3" maxlength="50">
 
             <label for="username">Username</label>
-            <input type="text" name="username">
+            <input type="text" name="username" required minlength="5" maxlength="50">
 
             <label for="email">Email</label>
-            <input type="email" name="email">
+            <input type="email" name="email" required minlength="5" maxlength="50">
 
             <label for="phone">Phone</label>
-            <input type="text" name="phone">
+            <input type="text" name="phone" required minlength="8" maxlength="50">
 
             <label for="password">Password</label>
-            <input type="password" name="password">
+            <input type="password" name="password" required minlength="8" maxlength="50">
 
             <button type="submit">Register</button>
         </form>

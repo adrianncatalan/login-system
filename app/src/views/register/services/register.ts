@@ -1,8 +1,7 @@
 const register = async () => {
     try {
-        const form = document.querySelector('.register-ts');
+        const form = document.querySelector('.register-ts') as HTMLFormElement;
         const formData = new FormData(form);
-        console.log(formData.entries().next().value[1])
         const url = 'http://localhost:8000/src/controllers/register.php';
 
         const response = await fetch(url, {

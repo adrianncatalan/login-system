@@ -11,4 +11,4 @@ $conn = mysqli_connect(
 
 if (!$conn) die('Connection error: ' . mysqli_connect_error());
 
-echo 'Successful connection!';
+// echo 'Successful connection!';
