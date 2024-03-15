@@ -11,4 +11,7 @@ $conn = mysqli_connect(
 
 if (!$conn) die('Connection error: ' . mysqli_connect_error());
 
+// Convirtiendo los datos que provienen de la BBDD utf8
+mysqli_set_charset($conn, "utf8");
+
 // echo 'Successful connection!';

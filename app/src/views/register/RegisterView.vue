@@ -21,6 +21,9 @@
 
             <button type="submit">Register</button>
         </form>
+        <div>
+            <h2>{{ message }}</h2>
+        </div>
     </div>
 </template>
 
@@ -29,10 +32,17 @@ import register from './services/register.ts'
 
 export default {
     name: 'RegisterView',
+    data() {
+        return {
+            message: null
+        }
+    },
     methods: {
         async registerUser() {
             try {
-                await register();
+                setTimeout(() => {
+                    this.message = register();
+                }, 3000);
             } catch (error) {
                 console.error('Error registering user:', error);
             }

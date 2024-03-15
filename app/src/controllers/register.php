@@ -20,21 +20,56 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $phone = filter_var($phone, FILTER_SANITIZE_NUMBER_INT);
     $password = htmlspecialchars($password);
 
-    // Verificar integridad de datos (por ejemplo, verificar si el username, email y phone ya existe en la base de datos)
-    // Realizamos una consult
-    $verifyQuery = 'SELECT username, email, phone FROM `user`';
-    $result = mysqli_query($conn, $verifyQuery);
-    $data[] = mysqli_fetch_assoc($result);
+    // Consulta preparada para verificar si los datos ya existen en la base de datos
+    $verifyQuery = "SELECT username, email, phone FROM `user`";
+    $stmt = mysqli_prepare($conn, $verifyQuery);
 
-    if ($data[0]['username'] === $name || $data[0]['email'] === $email || $data[0]['phone'] === $phone) {
-        echo 'The username, email or phone number is being used by another user. Please enter new information.';
-    } else {
-        $insertQuery = "INSERT INTO `user` (`id`, `name`, `lastname`, `username`, `email`, `phone`, `password`, `created_at`, `user_exist`) VALUES (uuid(), $name, $lastname, $username, $email, $phone, $password, now(), 1)";
-        if (mysqli_query($conn, $insertQuery)) {
-            echo 'Record inserted successfully.';
-        } else {
-            echo 'Error: ' . mysqli_error($conn);
+    if ($stmt) {
+        // Ejecutar la consulta preparada
+        mysqli_stmt_execute($stmt);
+
+        // Vincular variables para almacenar los resultados
+        mysqli_stmt_bind_result($stmt, $existingUsername, $existingEmail, $existingPhone);
+
+        // Inicializar una variable para verificar si los datos ya existen
+        $dataExists = false;
+
+        // Recorrer los resultados
+        while (mysqli_stmt_fetch($stmt)) {
+            // Verificar si los datos ya existen en la base de datos
+            if ($existingUsername === $username || $existingEmail === $email || $existingPhone === $phone) {
+                $dataExists = true;
+                break; // Salir del bucle si se encuentra un dato existente
+            }
         }
+
+        // Cerrar el objeto de sentencia preparada
+        mysqli_stmt_close($stmt);
+
+        // Insertar los datos si no existen en la base de datos
+        if (!$dataExists) {
+            // Consulta preparada para insertar los datos
+            $insertQuery = "INSERT INTO `user` (`id`, `name`, `lastname`, `username`, `email`, `phone`, `password`, `created_at`, `user_exist`) VALUES (uuid(), ?, ?, ?, ?, ?, ?, NOW(), 1)";
+            $stmt = mysqli_prepare($conn, $insertQuery);
+
+            // Vincular los parámetros de la consulta preparada
+            mysqli_stmt_bind_param($stmt, "ssssss", $name, $lastname, $username, $email, $phone, $password);
+
+            // Ejecutar la consulta preparada de inserción
+            if (mysqli_stmt_execute($stmt)) {
+                echo 'Record inserted successfully.';
+            } else {
+                echo 'Error: ' . mysqli_error($conn);
+            }
+
+            // Cerrar el objeto de sentencia preparada
+            mysqli_stmt_close($stmt);
+        } else {
+            echo 'The username, email, or phone number is being used by another user. Please enter new information.';
+        }
+    } else {
+        // Manejar errores en caso de que la preparación de la consulta falle
+        echo "Error al preparar la consulta: " . mysqli_error($conn);
     }
 
     // Cerramos la conexión

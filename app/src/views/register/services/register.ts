@@ -12,9 +12,10 @@ const register = async () => {
         if (!response.ok) {
             throw new Error('Hubo un problema al realizar la solicitud.');
         }
-
         const data = await response.text();
-        console.log(data);
+        form.reset();
+
+        return data;
 
     } catch (error) {
         console.error('Error:', error);
